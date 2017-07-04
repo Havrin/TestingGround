@@ -3,8 +3,6 @@
 #include "Tile.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
-#include "Components/HierarchicalInstancedStaticMeshComponent.h"
-
 
 // Sets default values
 ATile::ATile()
@@ -43,6 +41,13 @@ void ATile::PlaceActor(TSubclassOf<AActor> ToSpawn, FVector RandomPoint, float R
 void ATile::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//TActorIterator<AActor> ActorIterator = TActorIterator<AActor>(GetWorld());
+	//while (ActorIterator)
+	//{
+	//	AActor* FoundActor = *ActorIterator;
+	//	++ActorIterator; // NOT ActerIterator++ <- compileerror
+	//}
 }
 
 // Called every frame
