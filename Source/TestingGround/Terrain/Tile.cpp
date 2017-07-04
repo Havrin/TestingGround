@@ -3,6 +3,7 @@
 #include "Tile.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 
 
 // Sets default values
@@ -13,27 +14,29 @@ ATile::ATile()
 
 }
 
-void ATile::PlaceActors(TSubclassOf<AActor> ToSpawn, int32 MinSpawn, int32 MaxSpawn, float Radius)
+void ATile::PlaceActors(TSubclassOf<AActor> ToSpawn, int32 MinSpawn, int32 MaxSpawn, float MinScale, float MaxScale, float Radius)
 {
-
 	int32 NumberToSpawn = FMath::RandRange(MinSpawn, MaxSpawn);
 	for (int32 i = 0; i < NumberToSpawn; i++)
 	{
 		FVector RandomPoint;
-		if (FindEmptyLocation(RandomPoint, Radius))
+		float RandomScale = FMath::RandRange(MinScale, MaxScale);
+		if (FindEmptyLocation(RandomPoint, Radius * RandomScale))
 		{
-			PlaceActor(ToSpawn, RandomPoint);
+			float Rotation = FMath::RandRange(-180.f, 180.f);
+			PlaceActor(ToSpawn, RandomPoint, Rotation, RandomScale);
 		}
 		
 	}
-
 }
 
-void ATile::PlaceActor(TSubclassOf<AActor> ToSpawn, FVector RandomPoint)
+void ATile::PlaceActor(TSubclassOf<AActor> ToSpawn, FVector RandomPoint, float Rotation, float RandomScale)
 {
 	AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(ToSpawn);
 	SpawnedActor->SetActorRelativeLocation(RandomPoint);
 	SpawnedActor->AttachToActor(this, FAttachmentTransformRules(EAttachmentRule::KeepRelative, false));
+	SpawnedActor->SetActorRotation(FRotator(0, Rotation, 0));
+	SpawnedActor->SetActorScale3D(FVector(RandomScale));
 }
 
 // Called when the game starts or when spawned
@@ -62,8 +65,6 @@ bool ATile::IsAbleToSpawnAtLocation(FVector Location, float Radius)
 		FCollisionShape::MakeSphere(Radius)
 	);
 	FColor ResultColor = HasHit ? FColor::Red : FColor::Green;
-	DrawDebugCapsule(GetWorld(), GlobalLocation, 0, Radius, FQuat::Identity, ResultColor, true, 100);
-
 	return !HasHit;
 }
 
