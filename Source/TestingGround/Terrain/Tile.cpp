@@ -10,6 +10,25 @@ ATile::ATile()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	MinExtent = FVector(0, -2000, 0);
+	MaxExtent = FVector(4000, 2000, 0);
+}
+
+// Called when the game starts or when spawned
+void ATile::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void ATile::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	ActorPool->Return(NavMeshBoundsVolume);
+}
+
+// Called every frame
+void ATile::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
 
 }
 
@@ -25,7 +44,7 @@ void ATile::PlaceActors(TSubclassOf<AActor> ToSpawn, int32 MinSpawn, int32 MaxSp
 			float Rotation = FMath::RandRange(-180.f, 180.f);
 			PlaceActor(ToSpawn, RandomPoint, Rotation, RandomScale);
 		}
-		
+
 	}
 }
 
@@ -38,29 +57,30 @@ void ATile::PlaceActor(TSubclassOf<AActor> ToSpawn, FVector RandomPoint, float R
 	SpawnedActor->SetActorScale3D(FVector(RandomScale));
 }
 
-// Called when the game starts or when spawned
-void ATile::BeginPlay()
-{
-	Super::BeginPlay();
-
-	//TActorIterator<AActor> ActorIterator = TActorIterator<AActor>(GetWorld());
-	//while (ActorIterator)
-	//{
-	//	AActor* FoundActor = *ActorIterator;
-	//	++ActorIterator; // NOT ActerIterator++ <- compileerror
-	//}
-}
-
-// Called every frame
-void ATile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
 void ATile::SetActorPool(UActorPool* ActorPoolToSet)
 {
 	ActorPool = ActorPoolToSet;
+
+	PositionNavMeshBoundsVolume();
+}
+
+void ATile::PositionNavMeshBoundsVolume()
+{
+	if (ActorPool == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Actor Pool set!"));
+		return;
+	}
+
+	NavMeshBoundsVolume = ActorPool->Checkout();
+	if (NavMeshBoundsVolume == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Not enough Actors in pool"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("%s checked out: %s"), *GetName(), *NavMeshBoundsVolume->GetName());
+	NavMeshBoundsVolume->SetActorLocation(GetActorLocation());
 }
 
 bool ATile::IsAbleToSpawnAtLocation(FVector Location, float Radius)
@@ -81,9 +101,7 @@ bool ATile::IsAbleToSpawnAtLocation(FVector Location, float Radius)
 
 bool ATile::FindEmptyLocation(FVector& OutLocation, float Radius) 
 {
-	FVector Min(0, -2000, 0);
-	FVector Max(4000, 2000, 0);
-	FBox Bounds(Min, Max);
+	FBox Bounds(MinExtent, MaxExtent);
 	const int MAX_ATTEMPTS = 30;
 	for (size_t i = 0; i < MAX_ATTEMPTS; i++)
 	{
