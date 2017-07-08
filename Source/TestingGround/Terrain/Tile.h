@@ -29,6 +29,8 @@ protected:
 		FVector MinExtent;
 	UPROPERTY(EditDefaultsOnly, Category = "Spawning")
 		FVector MaxExtent;
+	UPROPERTY(EditDefaultsOnly, Category = "Navigation")
+		FVector NavMeshOffset;
 
 public:	
 	// Called every frame
